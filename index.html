@@ -1033,6 +1033,8 @@ restrictions upon itself.</p>
      <ul class="toc">
       <li><a href="#may-load-response"><span class="secno">3.1</span> <span class="content"> Is <var>resource</var> blocked by <var>browsing context</var>’s <code>iframe</code> security policy? </span></a>
       <li><a href="#subsume-policy"><span class="secno">3.2</span> <span class="content"> Is <var>policy A</var> subsumed under <var>policy B</var>? </span></a>
+      <li><a href="#effective-directive-value"><span class="secno">3.3</span> <span class="content"> Get the effective directive value for <var>directive name</var> in <var>policy</var> </span></a>
+      <li><a href="#subsume-source-list"><span class="secno">3.4</span> <span class="content"> Is <var>source list A</var> subsumed under <var>source list B</var>? </span></a>
      </ul>
     <li><a href="#conformance"><span class="secno"></span> <span class="content"> Conformance</span></a>
     <li>
@@ -1123,6 +1125,90 @@ restrictions upon itself.</p>
      <li data-md="">
       <p>If <var>policy A</var> is <code>null</code>, return <code>Not Subsumed</code>.</p>
      <li data-md="">
+      <p>For each <var>subsuming directive</var> in <var>policy B</var>’s list of
+  directives:</p>
+      <ol>
+       <li data-md="">
+        <p>Switch on <var>subsuming directive</var>’s name, and execute the
+  associated steps:</p>
+        <dl>
+         <dt data-md="">
+          <p><code>default-src</code></p>
+         <dd data-md="">
+          <ol>
+           <li data-md="">
+            <p>For each <var>directive name</var> in <code>child-src</code>, <code>connect-src</code>, <code>font-src</code>, <code>img-src</code>, <code>media-src</code>, <code>object-src</code>, <code>script-src</code>, and <code>style-src</code>:</p>
+            <ol>
+             <li data-md="">
+              <p>Let <var>subsumee directive</var> be the result of
+  executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
+    policy</a> on <var>directive
+  name</var> and <var>policy A</var>.</p>
+             <li data-md="">
+              <p>If <var>subsumee directive</var> is <code>Not Present</code>, return <code>Not Subsumed</code>.</p>
+             <li data-md="">
+              <p>If <a href="#subsume-source-list">§3.4 Is source list A subsumed under source list B?</a> returns <code>Not Subsumed</code> when
+  executed upon <var>subsumee directive</var> and <var>subsuming
+  directive</var>, return <code>Not Subsumed</code>.</p>
+            </ol>
+          </ol>
+         <dt data-md="">
+          <p><code>child-src</code></p>
+         <dt data-md="">
+          <p><code>connect-src</code></p>
+         <dt data-md="">
+          <p><code>font-src</code></p>
+         <dt data-md="">
+          <p><code>img-src</code></p>
+         <dt data-md="">
+          <p><code>media-src</code></p>
+         <dt data-md="">
+          <p><code>object-src</code></p>
+         <dt data-md="">
+          <p><code>script-src</code></p>
+         <dt data-md="">
+          <p><code>style-src</code></p>
+         <dd data-md="">
+          <ol>
+           <li data-md="">
+            <p>Let <var>subsumee directive</var> be the result of executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
+    policy</a> on the specified directive name
+  and <var>policy A</var>.</p>
+           <li data-md="">
+            <p>If <var>subsumee directive</var> is <code>Not Present</code>, return <code>Not Subsumed</code>.</p>
+           <li data-md="">
+            <p>If <a href="#subsume-source-list">§3.4 Is source list A subsumed under source list B?</a> returns <code>Not Subsumed</code> when
+  executed upon <var>subsumee directive</var> and <var>subsuming
+  directive</var>, return <code>Not Subsumed</code>.</p>
+          </ol>
+         <dt data-md="">
+          <p>Other</p>
+         <dd data-md="">
+          <p class="issue" id="issue-d3b21f17"><a class="self-link" href="#issue-d3b21f17"></a> We’re ignoring these for the moment. That’s probably a
+reasonable choice for some directives, but not so wonderful for
+others.</p>
+        </dl>
+      </ol>
+     <li data-md="">
+      <p>Return <code>Subsumed</code>.</p>
+    </ol>
+    <h3 class="heading settled" data-level="3.3" id="effective-directive-value"><span class="secno">3.3. </span><span class="content"> Get the effective directive value for <var>directive name</var> in <var>policy</var> </span><a class="self-link" href="#effective-directive-value"></a></h3>
+    <ol>
+     <li data-md="">
+      <p>If <var>directive name</var> is present in <var>policy</var>, then
+  return its value.</p>
+     <li data-md="">
+      <p>If <code>default-src</code> is present in <var>policy</var>, then return its value.</p>
+     <li data-md="">
+      <p>Return <code>Not Present</code>.</p>
+    </ol>
+    <h3 class="heading settled" data-level="3.4" id="subsume-source-list"><span class="secno">3.4. </span><span class="content"> Is <var>source list A</var> subsumed under <var>source list B</var>? </span><a class="self-link" href="#subsume-source-list"></a></h3>
+    <ol>
+     <li data-md="">
+      <p>If <var>source list A</var> is empty, return <code>Subsumed</code>.</p>
+     <li data-md="">
+      <p>If <var>source list B</var> is empty, return <code>Not Subsumed</code>.</p>
+     <li data-md="">
       <p>Magic happens here.</p>
      <li data-md="">
       <p>Return <code>Not Subsumed</code>.</p>
@@ -1206,6 +1292,9 @@ restrictions upon itself.</p>
 </pre>
   <h2 class="no-num heading settled" id="issues-index"><span class="content">Issues Index</span><a class="self-link" href="#issues-index"></a></h2>
   <div style="counter-reset:issue">
+   <div class="issue"> We’re ignoring these for the moment. That’s probably a
+reasonable choice for some directives, but not so wonderful for
+others.<a href="#issue-d3b21f17"> ↵ </a></div>
    <div class="issue"> This algorithm needs a tiny bit of work around step 3.<a href="#issue-db1ab391"> ↵ </a></div>
   </div>
  </body>
