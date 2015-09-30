@@ -161,11 +161,14 @@ spec:dom-ls; type:interface; text:Document
                 1.  Let <var>subsumee directive</var> be the result of
                     executing [[#effective-directive-value]] on <var>directive
                     name</var> and <var>policy A</var>.
-                2.  If <var>subsumee directive</var> is `Not Present`, return `Not
-                    Subsumed`.
-                3.  If [[#subsume-source-list]] returns `Not Subsumed` when
-                    executed upon <var>subsumee directive</var> and <var>subsuming
-                    directive</var>, return `Not Subsumed`.
+                2.  Let <var>effective subsumer</var> be the result of
+                    executing [[#effective-directive-value]] on <var>directive
+                    name</var> and <var>policy B</var>.
+                3.  If <var>subsumee directive</var> is `Not Present`, return
+                    `Not Subsumed`.
+                4.  If [[#subsume-source-list]] returns `Not Subsumed` when
+                    executed upon <var>subsumee directive</var> and
+                    <var>effective subsumer</var>, return `Not Subsumed`.
 
           : `child-src`
           : `connect-src`
@@ -176,7 +179,7 @@ spec:dom-ls; type:interface; text:Document
           : `script-src`
           : `style-src`
           ::
-            1.  Let <var>subsumee directive</var> be the result of executing
+            1.  Let <var>subsumee value</var> be the result of executing
                 [[#effective-directive-value]] on the specified directive name
                 and <var>policy A</var>.
             2.  If <var>subsumee directive</var> is `Not Present`, return `Not

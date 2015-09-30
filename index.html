@@ -1145,11 +1145,15 @@ restrictions upon itself.</p>
     policy</a> on <var>directive
   name</var> and <var>policy A</var>.</p>
              <li data-md="">
+              <p>Let <var>effective subsumer</var> be the result of
+  executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
+    policy</a> on <var>directive
+  name</var> and <var>policy B</var>.</p>
+             <li data-md="">
               <p>If <var>subsumee directive</var> is <code>Not Present</code>, return <code>Not Subsumed</code>.</p>
              <li data-md="">
               <p>If <a href="#subsume-source-list">§3.4 Is source list A subsumed under source list B?</a> returns <code>Not Subsumed</code> when
-  executed upon <var>subsumee directive</var> and <var>subsuming
-  directive</var>, return <code>Not Subsumed</code>.</p>
+  executed upon <var>subsumee directive</var> and <var>effective subsumer</var>, return <code>Not Subsumed</code>.</p>
             </ol>
           </ol>
          <dt data-md="">
@@ -1171,7 +1175,7 @@ restrictions upon itself.</p>
          <dd data-md="">
           <ol>
            <li data-md="">
-            <p>Let <var>subsumee directive</var> be the result of executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
+            <p>Let <var>subsumee value</var> be the result of executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
     policy</a> on the specified directive name
   and <var>policy A</var>.</p>
            <li data-md="">
