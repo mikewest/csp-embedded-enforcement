@@ -994,7 +994,7 @@
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">Content Security Policy: Embedded Enforcement</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">A Collection of Interesting Ideas, <time class="dt-updated" datetime="2015-09-30">30 September 2015</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">A Collection of Interesting Ideas, <time class="dt-updated" datetime="2015-10-08">8 October 2015</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -1027,14 +1027,13 @@ restrictions upon itself.</p>
      <a href="#framework"><span class="secno">2</span> <span class="content">Framework</span></a>
      <ul class="toc">
       <li><a href="#monkey-patching-html"><span class="secno">2.1</span> <span class="content">Modifications to HTML</span></a>
+      <li><a href="#monkey-patching-fetch"><span class="secno">2.2</span> <span class="content">Modifications to Fetch</span></a>
      </ul>
     <li>
      <a href="#algorithms"><span class="secno">3</span> <span class="content">Algorithms</span></a>
      <ul class="toc">
-      <li><a href="#may-load-response"><span class="secno">3.1</span> <span class="content"> Is <var>resource</var> blocked by <var>browsing context</var>’s <code>iframe</code> security policy? </span></a>
-      <li><a href="#subsume-policy"><span class="secno">3.2</span> <span class="content"> Is <var>policy A</var> subsumed under <var>policy B</var>? </span></a>
-      <li><a href="#effective-directive-value"><span class="secno">3.3</span> <span class="content"> Get the effective directive value for <var>directive name</var> in <var>policy</var> </span></a>
-      <li><a href="#subsume-source-list"><span class="secno">3.4</span> <span class="content"> Is <var>source list A</var> subsumed under <var>source list B</var>? </span></a>
+      <li><a href="#may-load-response"><span class="secno">3.1</span> <span class="content"> Is <var>response</var> blocked by <var>browsing context</var>’s <code>iframe</code> security policy? </span></a>
+      <li><a href="#subsume-policy"><span class="secno">3.2</span> <span class="content"> Is <var>policy list</var> subsumed under <var>subsuming policy</var>? </span></a>
      </ul>
     <li><a href="#conformance"><span class="secno"></span> <span class="content"> Conformance</span></a>
     <li>
@@ -1057,8 +1056,8 @@ restrictions upon itself.</p>
     <h2 class="heading settled" data-level="1" id="intro"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#intro"></a></h2>
     <p><em>This section is not normative.</em></p>
     <h3 class="heading settled" data-level="1.1" id="examples"><span class="secno">1.1. </span><span class="content">Examples</span><a class="self-link" href="#examples"></a></h3>
-    <div class="example" id="example-266f25ac">
-     <a class="self-link" href="#example-266f25ac"></a> MegaCorp Inc. wishes to ensure that the advertisements that run on its
+    <div class="example" id="example-a1e835c0">
+     <a class="self-link" href="#example-a1e835c0"></a> MegaCorp Inc. wishes to ensure that the advertisements that run on its
     various publications are locked down to include script from trusted origins
     that have been audited for safety. They can do so by including the
     advertisement via an <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-iframe-element">iframe</a></code> element with a <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute: 
@@ -1066,8 +1065,9 @@ restrictions upon itself.</p>
         <a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a>="script-src https://trusted-cdn.example.com/">
 &lt;/iframe>
 </pre>
-     <p>The advertisment will only load if it is delivered with a <a data-link-type="dfn" href="https://w3c.github.io/webappsec/specs/content-security-policy#content-security-policy-header-field"><code>Content-Security-Policy</code></a> HTTP response header which is at least as
-    restrictive as the policy specified by the embedder.</p>
+     <p>The advertisment will only load if it is delivered with a Content Security
+    Policy which is at least as restrictive as the policy specified by the
+    embedder.</p>
     </div>
    </section>
    <section>
@@ -1086,138 +1086,87 @@ restrictions upon itself.</p>
   browsing context</a> created (before the intial <code>about:blank</code> <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#document">Document</a></code> is
   created), and when an <code><a data-link-type="element" href="https://html.spec.whatwg.org/multipage/embedded-content.html#the-iframe-element">iframe</a></code> element’s <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute is set
   or changed while it has a <a data-link-type="dfn" href="https://html.spec.whatwg.org/#nested-browsing-context">nested browsing context</a>, the user agent
-  must set the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#nested-browsing-context">nested browsing context</a>’s <a data-link-type="dfn" href="#iframe-security-policy"><code>iframe</code> security policy</a> to the result of executing the <a data-link-type="dfn" href="https://w3c.github.io/webappsec/specs/content-security-policy#parse-the-policy">parse the policy</a> algorithm on the <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute’s value.</p>
+  must set the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#nested-browsing-context">nested browsing context</a>’s <a data-link-type="dfn" href="#iframe-security-policy"><code>iframe</code> security policy</a> to the result of executing the <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#parse-serialized-policy">parse a serialized policy</a> algorithm on
+  the <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute’s value.</p>
     <p>During the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#navigate">navigate</a> algorithm, perform the following step after the
   current step 19. At this point, the user agent has fetched a response which it
   is about to begin parsing, and redirects have been processed:</p>
     <ol start="20">
-     <li> If the algorithm in <a href="#may-load-response">§3.1 Is resource blocked by browsing context’s iframe security policy?</a> returns <code>Blocked</code> when executed
+     <li> If the algorithm in <a href="#may-load-response">§3.1 Is response blocked by browsing context’s iframe
+    security policy?</a> returns <code>Blocked</code> when executed
       upon the resource and the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#browsing-context">browsing context</a> being navigated, abort
       these steps. The user agent MAY indicate to the user that navigation has
       been aborted for security reasons. 
     </ol>
+    <h3 class="heading settled" data-level="2.2" id="monkey-patching-fetch"><span class="secno">2.2. </span><span class="content">Modifications to Fetch</span><a class="self-link" href="#monkey-patching-fetch"></a></h3>
+    <p class="issue" id="issue-f096b900"><a class="self-link" href="#issue-f096b900"></a> Something something send the policy specified in the <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute along with navigational requests targeting nested browsing contexts
+  so that folks can simply echo the policy if they decide that doing so is safe.</p>
    </section>
    <section>
     <h2 class="heading settled" data-level="3" id="algorithms"><span class="secno">3. </span><span class="content">Algorithms</span><a class="self-link" href="#algorithms"></a></h2>
-    <h3 class="heading settled" data-level="3.1" id="may-load-response"><span class="secno">3.1. </span><span class="content"> Is <var>resource</var> blocked by <var>browsing context</var>’s <code>iframe</code> security policy? </span><a class="self-link" href="#may-load-response"></a></h3>
-    <p>Given a resource (<var>resource</var>) and a <a data-link-type="dfn" href="https://html.spec.whatwg.org/#browsing-context">browsing context</a> (<var>context</var>), this algorithm returns <code>Allowed</code> or <code>Blocked</code> as
+    <h3 class="heading settled" data-level="3.1" id="may-load-response"><span class="secno">3.1. </span><span class="content"> Is <var>response</var> blocked by <var>browsing context</var>’s <code>iframe</code> security policy? </span><a class="self-link" href="#may-load-response"></a></h3>
+    <p>Given a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response">response</a> (<var>response</var>) and a <a data-link-type="dfn" href="https://html.spec.whatwg.org/#browsing-context">browsing context</a> (<var>context</var>), this algorithm returns <code>Allowed</code> or <code>Blocked</code> as
   appropriate:</p>
     <ol>
      <li data-md="">
-      <p>Let <var>embedder policy</var> be the value of <var>context</var>’s <a data-link-type="dfn" href="#iframe-security-policy"><code>iframe</code> security policy</a>.</p>
+      <p>Let <var>embedding policy</var> be the value of <var>context</var>’s <a data-link-type="dfn" href="#iframe-security-policy"><code>iframe</code> security policy</a>.</p>
      <li data-md="">
-      <p>Let <var>resource policy</var> be the result of executing the <a data-link-type="dfn" href="https://w3c.github.io/webappsec/specs/content-security-policy#parse-the-policy">parse
-  the policy</a> algorithm on the value of <var>resource</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec/specs/content-security-policy#content-security-policy-header-field"><code>Content-Security-Policy</code></a> HTTP response header field, or <code>null</code> if no such header exists.</p>
+      <p>Let <var>policy list</var> be the value of <var>response</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#response-policy-list">policy list</a>.</p>
      <li data-md="">
-      <p>If the <a href="#subsume-policy">§3.2 Is policy A subsumed under policy B?</a> algorithm returns <code>Subsumed</code> when executed
-  upon <var>resource policy</var> and <var>embedder policy</var> (that
-  is, if the resource’s policy is <a data-link-type="dfn" href="#subsumed-under">subsumed under</a> the embedder’s
-  policy), return <code>Allowed</code>.</p>
+      <p>If the <a href="#subsume-policy">§3.2 Is policy list subsumed under subsuming policy?</a> algorithm returns <code>Subsumed</code> when executed
+  upon <var>policy list</var> and <var>embedding policy</var>, return <code>Allowed</code>.</p>
      <li data-md="">
       <p>Return <code>Blocked</code>.</p>
     </ol>
-    <h3 class="heading settled" data-level="3.2" id="subsume-policy"><span class="secno">3.2. </span><span class="content"> Is <var>policy A</var> subsumed under <var>policy B</var>? </span><a class="self-link" href="#subsume-policy"></a></h3>
-    <p>One <a data-link-type="dfn" href="https://w3c.github.io/webappsec/specs/content-security-policy#security-policy">Content Security Policy</a> (<var>policy A</var>) is said to be <dfn data-dfn-type="dfn" data-export="" id="subsumed-under">subsumed under<a class="self-link" href="#subsumed-under"></a></dfn> another (<var>policy B</var>) if there is
-  no case which would violate <var>policy B</var> which would not also violate <var>policy A</var>. Given two policies, this algorithm returns <code>Subsumed</code> or <code>Not Subsumed</code> as appropriate:</p>
+    <h3 class="heading settled" data-level="3.2" id="subsume-policy"><span class="secno">3.2. </span><span class="content"> Is <var>policy list</var> subsumed under <var>subsuming policy</var>? </span><a class="self-link" href="#subsume-policy"></a></h3>
+    <p>Given a list of <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#policy">policy</a> objects (<var>policy list</var>), this algorithm
+  returns <code>Subsumed</code> if that list enforces a <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#policy">policy</a> which is an exact
+  match for a given <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#policy">policy</a> object (<var>subsuming policy</var>). It
+  returns <code>Not Subsumed</code> otherwise.</p>
+    <p class="note" role="note">Note: I have delusions of someday defining a real subsumption algorithm
+  which would verify that the policy <code>default-src 'none'; script-src https://example.com</code> is subsumbed under <code>default-src *.example.com</code> (as
+  there is no case in which the latter will block a request that the former
+  would allow). That calculation turns out to be hard, so the current algorithm
+  takes the significantly simpler approach of requiring an exact match.</p>
+    <p class="note" role="note">Note: This is not an efficient algorithm. Implementers are encouraged to
+  implement something a little smarter and faster, with the same behavior.</p>
     <ol>
      <li data-md="">
-      <p>If <var>policy B</var> is <code>null</code>, return <code>Subsumed</code>.</p>
+      <p>If <var>subsuming policy</var> is <code>null</code>, return <code>Subsumed</code>.</p>
      <li data-md="">
-      <p>If <var>policy A</var> is <code>null</code>, return <code>Not Subsumed</code>.</p>
-     <li data-md="">
-      <p>For each <var>subsuming directive</var> in <var>policy B</var>’s list of
-  directives:</p>
+      <p>For each <var>policy</var> in <var>policy list</var>:</p>
       <ol>
        <li data-md="">
-        <p>Switch on <var>subsuming directive</var>’s name, and execute the
-  associated steps:</p>
-        <dl>
-         <dt data-md="">
-          <p><code>default-src</code></p>
-         <dd data-md="">
+        <p>If <var>policy</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#disposition">disposition</a> is not <code>Enforce</code>, set skip to the next <var>policy</var>.</p>
+       <li data-md="">
+        <p>If <var>policy</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive-set">directive set</a> is not the
+  same size as <var>subsuming policy</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive-set">directive
+  set</a>, skip to the next <var>policy</var>.</p>
+       <li data-md="">
+        <p>For each <var>directive</var> in <var>policy</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive-set">directive set</a>:</p>
+        <ol>
+         <li data-md="">
+          <p>Let <var>subsuming directive</var> be the <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive">directive</a> in <var>subsuming policy</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive-set">directive
+  set</a> whose <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#name">name</a> matches <var>directive</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#name">name</a>, or <code>null</code> if no such <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#directive">directive</a> is present.</p>
+         <li data-md="">
+          <p>If <var>subsuming directive</var> is <code>null</code>, skip to the next <var>policy</var>.</p>
+         <li data-md="">
+          <p>If <var>subsuming directive</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#value">value</a> list is not the same size as <var>directive</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#value">value</a> list, skip to the next <var>policy</var>.</p>
+         <li data-md="">
+          <p>For each <var>token</var> in <var>directive</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#value">value</a>:</p>
           <ol>
            <li data-md="">
-            <p>For each <var>directive name</var> in <code>child-src</code>, <code>connect-src</code>, <code>font-src</code>, <code>img-src</code>, <code>media-src</code>, <code>object-src</code>, <code>script-src</code>, and <code>style-src</code>:</p>
-            <ol>
-             <li data-md="">
-              <p>Let <var>subsumee directive</var> be the result of
-  executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
-    policy</a> on <var>directive
-  name</var> and <var>policy A</var>.</p>
-             <li data-md="">
-              <p>Let <var>effective subsumer</var> be the result of
-  executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
-    policy</a> on <var>directive
-  name</var> and <var>policy B</var>.</p>
-             <li data-md="">
-              <p>If <var>subsumee directive</var> is <code>Not Present</code>, return <code>Not Subsumed</code>.</p>
-             <li data-md="">
-              <p>If <a href="#subsume-source-list">§3.4 Is source list A subsumed under source list B?</a> returns <code>Not Subsumed</code> when
-  executed upon <var>subsumee directive</var> and <var>effective subsumer</var>, return <code>Not Subsumed</code>.</p>
-            </ol>
+            <p>If <var>token</var> is not present in <var>subsuming
+  directive</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webappsec-csp#value">value</a>, skip to the
+  next <var>policy</var>.</p>
           </ol>
-         <dt data-md="">
-          <p><code>child-src</code></p>
-         <dt data-md="">
-          <p><code>connect-src</code></p>
-         <dt data-md="">
-          <p><code>font-src</code></p>
-         <dt data-md="">
-          <p><code>img-src</code></p>
-         <dt data-md="">
-          <p><code>media-src</code></p>
-         <dt data-md="">
-          <p><code>object-src</code></p>
-         <dt data-md="">
-          <p><code>script-src</code></p>
-         <dt data-md="">
-          <p><code>style-src</code></p>
-         <dd data-md="">
-          <ol>
-           <li data-md="">
-            <p>Let <var>subsumee value</var> be the result of executing <a href="#effective-directive-value">§3.3 Get the effective directive value for directive name in
-    policy</a> on the specified directive name
-  and <var>policy A</var>.</p>
-           <li data-md="">
-            <p>If <var>subsumee directive</var> is <code>Not Present</code>, return <code>Not Subsumed</code>.</p>
-           <li data-md="">
-            <p>If <a href="#subsume-source-list">§3.4 Is source list A subsumed under source list B?</a> returns <code>Not Subsumed</code> when
-  executed upon <var>subsumee directive</var> and <var>subsuming
-  directive</var>, return <code>Not Subsumed</code>.</p>
-          </ol>
-         <dt data-md="">
-          <p>Other</p>
-         <dd data-md="">
-          <p class="issue" id="issue-d3b21f17"><a class="self-link" href="#issue-d3b21f17"></a> We’re ignoring these for the moment. That’s probably a
-reasonable choice for some directives, but not so wonderful for
-others.</p>
-        </dl>
+        </ol>
+       <li data-md="">
+        <p>Return <code>Subsumed</code>.</p>
       </ol>
-     <li data-md="">
-      <p>Return <code>Subsumed</code>.</p>
-    </ol>
-    <h3 class="heading settled" data-level="3.3" id="effective-directive-value"><span class="secno">3.3. </span><span class="content"> Get the effective directive value for <var>directive name</var> in <var>policy</var> </span><a class="self-link" href="#effective-directive-value"></a></h3>
-    <ol>
-     <li data-md="">
-      <p>If <var>directive name</var> is present in <var>policy</var>, then
-  return its value.</p>
-     <li data-md="">
-      <p>If <code>default-src</code> is present in <var>policy</var>, then return its value.</p>
-     <li data-md="">
-      <p>Return <code>Not Present</code>.</p>
-    </ol>
-    <h3 class="heading settled" data-level="3.4" id="subsume-source-list"><span class="secno">3.4. </span><span class="content"> Is <var>source list A</var> subsumed under <var>source list B</var>? </span><a class="self-link" href="#subsume-source-list"></a></h3>
-    <ol>
-     <li data-md="">
-      <p>If <var>source list A</var> is empty, return <code>Subsumed</code>.</p>
-     <li data-md="">
-      <p>If <var>source list B</var> is empty, return <code>Not Subsumed</code>.</p>
-     <li data-md="">
-      <p>Magic happens here.</p>
      <li data-md="">
       <p>Return <code>Not Subsumed</code>.</p>
     </ol>
-    <p class="issue" id="issue-db1ab391"><a class="self-link" href="#issue-db1ab391"></a> This algorithm needs a tiny bit of work around step 3.</p>
    </section>
   </main>
   <h2 class="no-ref no-num heading settled" id="conformance"><span class="content"> Conformance</span><a class="self-link" href="#conformance"></a></h2>
@@ -1245,16 +1194,25 @@ others.</p>
      <li><a href="#dom-htmliframeelement-csp">attribute for HTMLIFrameElement</a><span>, in §2.1</span>
     </ul>
    <li><a href="#iframe-security-policy">iframe security policy</a><span>, in §2.1</span>
-   <li><a href="#subsumed-under">subsumed under</a><span>, in §3.2</span>
   </ul>
   <h3 class="no-num heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
   <ul class="indexlist">
    <li>
     <a data-link-type="biblio" href="#biblio-csp">[CSP]</a> defines the following terms:
     <ul>
-     <li><a href="https://w3c.github.io/webappsec/specs/content-security-policy#security-policy">content security policy</a>
-     <li><a href="https://w3c.github.io/webappsec/specs/content-security-policy#content-security-policy-header-field">content-security-policy</a>
-     <li><a href="https://w3c.github.io/webappsec/specs/content-security-policy#parse-the-policy">parse the policy</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#directive">directive</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#directive-set">directive set</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#disposition">disposition</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#name">name</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#parse-serialized-policy">parse a serialized policy</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#policy">policy</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#response-policy-list">policy list</a>
+     <li><a href="https://w3c.github.io/webappsec-csp#value">value</a>
+    </ul>
+   <li>
+    <a data-link-type="biblio" href="#biblio-fetch">[FETCH]</a> defines the following terms:
+    <ul>
+     <li><a href="https://fetch.spec.whatwg.org/#concept-response">response</a>
     </ul>
    <li>
     <a data-link-type="biblio" href="#biblio-html">[HTML]</a> defines the following terms:
@@ -1281,6 +1239,8 @@ others.</p>
   <dl>
    <dt id="biblio-csp"><a class="self-link" href="#biblio-csp"></a>[CSP]
    <dd>Brandon Sterne; Adam Barth. <a href="http://www.w3.org/TR/CSP1/">Content Security Policy 1.0</a>. 19 February 2015. NOTE. URL: <a href="http://www.w3.org/TR/CSP1/">http://www.w3.org/TR/CSP1/</a>
+   <dt id="biblio-fetch"><a class="self-link" href="#biblio-fetch"></a>[FETCH]
+   <dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/">Fetch Standard</a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
    <dt id="biblio-html"><a class="self-link" href="#biblio-html"></a>[HTML]
    <dd>Ian Hickson. <a href="https://html.spec.whatwg.org/multipage/">HTML Standard</a>. Living Standard. URL: <a href="https://html.spec.whatwg.org/multipage/">https://html.spec.whatwg.org/multipage/</a>
    <dt id="biblio-dom-ls"><a class="self-link" href="#biblio-dom-ls"></a>[DOM-LS]
@@ -1296,10 +1256,8 @@ others.</p>
 </pre>
   <h2 class="no-num heading settled" id="issues-index"><span class="content">Issues Index</span><a class="self-link" href="#issues-index"></a></h2>
   <div style="counter-reset:issue">
-   <div class="issue"> We’re ignoring these for the moment. That’s probably a
-reasonable choice for some directives, but not so wonderful for
-others.<a href="#issue-d3b21f17"> ↵ </a></div>
-   <div class="issue"> This algorithm needs a tiny bit of work around step 3.<a href="#issue-db1ab391"> ↵ </a></div>
+   <div class="issue"> Something something send the policy specified in the <code><a data-link-type="element-attr" href="#element-attrdef-iframe-csp">csp</a></code> attribute along with navigational requests targeting nested browsing contexts
+  so that folks can simply echo the policy if they decide that doing so is safe.<a href="#issue-f096b900"> ↵ </a></div>
   </div>
  </body>
 </html>
