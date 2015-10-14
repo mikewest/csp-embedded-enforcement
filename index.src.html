@@ -25,14 +25,18 @@ spec: CSP; urlPrefix: https://w3c.github.io/webappsec-csp
     text: directive
     text: name; for: directive
     text: value; for: directive
+  type: grammar
+    text: serialized-policy; url: grammardef-serialized-policy
 spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
   type: dfn
+    text: request; url: concept-request
     text: response; url: concept-response
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/
   type: dfn
     text: navigate
     text: browsing context
     text: nested browsing context
+    text: browsing context container
 </pre>
 <pre class="link-defaults">
 spec:dom-ls; type:interface; text:Document
@@ -67,16 +71,49 @@ spec:dom-ls; type:interface; text:Document
       &lt;/iframe&gt;
     </pre>
 
+    This will generate a request to `advertisements-r-us.example.com` that has
+    an <a>`Embedding-CSP`</a> header, as follows:
+
+    <pre>
+      GET / HTTP/1.1
+      Host: advertisements-r-us.example.com
+      ...
+      <a>Embedding-CSP</a>: script-src https://trusted-cdn.example.com/
+      ...
+    </pre>
+
     The advertisment will only load if it is delivered with a Content Security
-    Policy which is at least as restrictive as the policy specified by the
-    embedder.
+    Policy which exactly matches the <{iframe/csp}> attribute's value. One way
+    to do so is to send the requested policy:
+   
+    <pre>
+      HTTP/1.1 200 OK
+      ...
+      <a>Content-Security-Policy</a>: script-src https://trusted-cdn.example.com/
+    </pre>
+
+    The server might want to futher restrict the document, however. Perhaps it
+    wishes to ensure that plugins will not be loaded. It can do so by sending
+    another policy with additional restrictions:
+   
+    <pre>
+      HTTP/1.1 200 OK
+      ...
+      <a>Content-Security-Policy</a>: script-src https://trusted-cdn.example.com/,
+                               object-src 'none'
+    </pre>
+
+    The "`,`" in the <a>`Content-Security-Policy`</a> header's value splits the
+    string into two serialized policies, each of which is enforced.
   </div>
 </section>
 
 <section>
   <h2 id="framework">Framework</h2>
 
-  <h3 id="monkey-patching-html">Modifications to HTML</h3>
+  <h3 id="monkey-patching-html">
+    Specifying a Policy Requirement
+  </h3>
 
   <a>Browsing contexts</a> have an <dfn export>`iframe` security policy</dfn>
   attribute, which is `null` unless otherwise specified.
@@ -115,11 +152,33 @@ spec:dom-ls; type:interface; text:Document
     </li>
   </ol>
 
-  <h3 id="monkey-patching-fetch">Modifications to Fetch</h3>
+  <h3 id="embedding-csp-http-header">
+    The `Embedding-CSP` HTTP Request Header
+  </h3>
 
-  ISSUE: Something something send the policy specified in the <{iframe/csp}>
-  attribute along with navigational requests targeting nested browsing contexts
-  so that folks can simply echo the policy if they decide that doing so is safe.
+  In order to ensure that the embedded resource can decide whether or not it is
+  willing to adhere to the embedder's requirements, the policy expressed in an
+  <{iframe}>'s <{iframe/csp}> attribute is communicated along with some
+  <a>requests</a> via an "<dfn export>`Embedding-CSP`</dfn>" HTTP request
+  header. The header's value is represented by the following ABNF [[!RFC5234]]:
+
+  <pre>
+    Embedding-CSP = <a grammar>serialized-policy</a>
+  </pre>
+
+  A user agent MUST NOT send more than one HTTP response header field named
+  "`Embedding-CSP`", and any such header MUST NOT contain more than one
+  <a grammar>serialized-policy</a>.
+
+  ISSUE: Step ~15 of the <a>navigate</a> algorithm needs to be adjusted to add
+  an `Embedding-CSP` header to a navigational request iff the navigation targets
+  a nested browsing context, and if the <a>browsing context container</a> is an
+  <{iframe}> element with a <{iframe/csp}> attribute. This should be pretty
+  straightforward once the algorithm is rewritten in terms of Fetch, but is a
+  bit tricky today.
+</section>
+
+<section>
 </section>
 
 <section>
